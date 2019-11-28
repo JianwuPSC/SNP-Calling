@@ -24,7 +24,7 @@ step6: samtools view -T ref.fasta -h seq.sam > seq.header.bam
 #you can also use picard
 
 #put header in bam by picard
-step6 : java -jar /path/picard.jar AddOrReplaceReadGroups I=seq.bam O=seq.header.bam RGLB=genome RGPL=ILLUMINA RGPU=GATKv4 RGSM=sample_name VALIDATION_STRINGENCY=LENIENT
+step6 : java -jar /path/picard.jar AddOrReplaceReadGroups I=seq.bam O=seq.header.bam RGLB=genome RGPL=ILLUMINA RGPU=bcftools RGSM=sample_name VALIDATION_STRINGENCY=LENIENT
 #sort by samtools
 step7:samtools sort seq.header.bam seq.sort.header.bam
 #merge
@@ -32,10 +32,10 @@ step7:samtools sort seq.header.bam seq.sort.header.bam
 
 # For the next step,we have mang methods and we use bcftools in this files.And you can try GATK
 
-#search for mutation site
+#search for variation site
 step8: bcftools mpileup -Ou -f ref.fa seq.sort.header.bam | bcftools call -mv -Ob -o seq.bcf
 #screen SNP,this means the reads of ref lower 1,and the depth is between 20 and 100.
-step9: bcftools view -i 'TYPE!="indel" && (DP4[0]+DP4[1])<1 && DP >20 && DP < 100' > seq.vef
+step9: bcftools view -i 'TYPE!="indel" && (DP4[0]+DP4[1])<1 && DP >20 && DP < 100' seq.bcf > seq.vcf
 #query
 step10: bcftools query -i 
 #merge
