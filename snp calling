@@ -1,0 +1,46 @@
+# I'm sorry that I have no time to mark a script of python.It aboult proess of SNP calling.
+
+
+# Quality checking
+step1: fastqc seq.fasta.gz
+
+# Cut off adapter
+step2: trim_galore -paired seq1.fasta seq2.fasta
+
+# bwa mapping
+
+#building index
+step3: bwa  index ref.fasta
+#mapping
+step4: bwa mem ref.fa seq.fq seq.fq > seq.sam
+
+#samtools sort and duplicates 
+
+#transfer sam file into bam file,and exact mapping seq
+step5: samtools view -bF 12 seq.sam > seq.bam
+#put header in sam by samtools
+step6: samtools view -T ref.fasta -h seq.sam > seq.header.bam
+
+#you can also use picard
+
+#put header in bam by picard
+step6 : java -jar /path/picard.jar AddOrReplaceReadGroups I=seq.bam O=seq.header.bam RGLB=genome RGPL=ILLUMINA RGPU=GATKv4 RGSM=sample_name VALIDATION_STRINGENCY=LENIENT
+#sort by samtools
+step7:samtools sort seq.header.bam seq.sort.header.bam
+#merge
+# For me, I have used only one seq,so I haven't merged
+
+# For the next step,we have mang methods and we use bcftools in this files.And you can try GATK
+
+#search for mutation site
+step8: bcftools mpileup -Ou -f ref.fa seq.sort.header.bam | bcftools call -mv -Ob -o seq.bcf
+#screen SNP,this means the reads of ref lower 1,and the depth is between 20 and 100.
+step9: bcftools view -i 'TYPE!="indel" && (DP4[0]+DP4[1])<1 && DP >20 && DP < 100' > seq.vef
+#query
+step10: bcftools query -i 
+#merge
+step11: bcftools merge -l samplelist > multi-seq.vcf
+#Extract the variation that occurs in all samples
+serp12: bcftools isec -p outdir -n=3 sample1.vcf.gz sample2.vcf.gz sample3.vcf.gz
+
+#Next,you can use vcftools to mark descriptive statistics, calculation data, filtering data and data format conversion
