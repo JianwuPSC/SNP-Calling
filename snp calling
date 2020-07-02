@@ -1,5 +1,3 @@
-# I'm sorry that I have no time to mark a script of python.It aboult proess of SNP calling.
-
 
 # Quality checking
 step1: fastqc seq.fasta.gz
